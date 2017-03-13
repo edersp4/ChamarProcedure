@@ -1,0 +1,55 @@
+package br.com.atlantic.solutions.dao;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import oracle.jdbc.internal.OracleCallableStatement;
+import oracle.jdbc.internal.OracleTypes;
+
+public class ChamarPackTeste {
+	private Connection minhaConnection;
+
+	public ChamarPackTeste(Connection minhaConnection ) {
+		this.minhaConnection = minhaConnection;
+	}
+	
+	public void chamarPack() throws SQLException {
+		String pacErros = "{CALL sp_testa_ref_cursor(?)}";
+		OracleCallableStatement procedure = null;
+		ResultSet resultSet = null;
+		
+		try {
+			
+		procedure = (OracleCallableStatement) minhaConnection.prepareCall(pacErros);
+		procedure.registerOutParameter(1, OracleTypes.CURSOR);
+		procedure.execute();
+		resultSet = (ResultSet)procedure.getObject(1);
+		
+		
+		while (resultSet.next()) {
+			System.out.print("Nome:" + resultSet.getString("nom_pessoa_fisica") + "                    ");
+			System.out.println("CPF:" + resultSet.getString("num_cpf"));
+		}
+		
+		
+		
+		}finally {
+			if(procedure != null)
+				procedure.close();
+
+			if(minhaConnection != null && !minhaConnection.isClosed())
+				minhaConnection.close();
+			
+			if(resultSet != null)
+				resultSet.close();
+			
+			
+		}
+	}
+	
+	public static void main(String[] args) throws SQLException {
+		Connection conexao = new ConexaoFactory().obterConexaoHomologacao();
+		new ChamarPackTeste(conexao).chamarPack();
+	}
+}
